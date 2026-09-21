@@ -281,7 +281,7 @@ class AgentsAPIAdapter:
             raise AgentsAPIUnavailableError(
                 "Live mode requires the OpenAI Python SDK with beta Agents sessions support."
             ) from exc
-        return OpenAI(api_key=key)
+        return OpenAI(api_key=key, max_retries=0)
 
     @property
     def sessions(self) -> Any:

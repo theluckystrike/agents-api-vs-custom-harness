@@ -3,6 +3,7 @@ __pycache__/
 *.py[cod]
 .DS_Store
 .env
+.venv/
 
 # Keep the published evidence run; ignore later local runs by default.
 runs/*

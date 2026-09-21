@@ -468,16 +468,27 @@
     "missing_value_policy": "Use null for unavailable or unknown measurements; never coerce them to zero."
   },
   "pricing_snapshot": {
-    "status": "must_be_frozen_before_first_live_pair",
-    "official_source_url": null,
-    "retrieved_utc": null,
+    "status": "frozen_before_first_live_pair",
+    "official_source_url": "https://developers.openai.com/api/docs/models/gpt-5.6-terra",
+    "retrieved_utc": "2026-09-21T17:08:01Z",
     "currency": "USD",
     "per_million_tokens": {
-      "uncached_input": null,
-      "cached_input": null,
-      "output": null
+      "uncached_input": 2.0,
+      "cached_input": 0.2,
+      "output": 12.0
     },
-    "agents_api_non_token_charges": null
+    "agents_api_non_token_charges": {
+      "value_usd_per_run": 0.0,
+      "basis": "environment.type is none and the protocol uses only application-hosted function tools; the Agents API overview lists model, OpenAI tool, and hosted container charges, so this configuration has no documented non-token component"
+    }
+  },
+  "dependency_snapshot": {
+    "status": "frozen_before_first_live_pair",
+    "python": "3.13.11",
+    "python_minimum": "3.10",
+    "openai_sdk_version": "3.16.2",
+    "openai_sdk_source": "git+https://github.com/openai/openai-python.git@febbcdfe39f6887caeb4c3c18e5aabb4404ef59b",
+    "reason": "The latest PyPI release inspected on 2026-09-21 (2.48.0) did not expose beta.agents.sessions; this exact official SDK commit does."
   },
   "valid_trial_invariants": [
     "first invocation exits 75 only after C2 is durable",

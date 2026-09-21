@@ -1,0 +1,3 @@
+# Managed Agents support is present on this exact official SDK commit but was
+# not yet exposed by the latest PyPI release inspected before the first live pair.
+openai @ git+https://github.com/openai/openai-python.git@febbcdfe39f6887caeb4c3c18e5aabb4404ef59b

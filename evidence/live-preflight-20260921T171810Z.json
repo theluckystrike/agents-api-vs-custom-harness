@@ -1,0 +1,19 @@
+{
+  "checked_at": "2026-09-21T17:18:10Z",
+  "checks": {
+    "model_frozen": true,
+    "openai_api_key_present": false,
+    "openai_sdk_agents_sessions_surface": true,
+    "openai_sdk_responses_surface": true,
+    "openai_sdk_surface_error": null,
+    "openai_sdk_version": "3.16.2",
+    "pricing_snapshot_ready": true,
+    "programs_present": {
+      "agents_api": true,
+      "custom_harness": true
+    },
+    "protocol_preregistered": true,
+    "python_version_supported": true
+  },
+  "ready": false
+}

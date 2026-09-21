@@ -78,6 +78,16 @@ The expected summary is fixed before any live run:
 - `agents_api.py` is a standard-library, mockable adapter around the current
   `client.beta.agents.sessions` interface, plus an explicitly labeled offline
   session simulator.
+- `managed_live.py` is the provider-backed managed-session arm. It persists the
+  session pointer and tool receipts, stops at the required failure boundary,
+  and resumes the same session in a replacement process.
+- `responses_live.py` is the provider-backed application-owned Responses loop.
+  It uses `store=False`, disables SDK retries, persists the replay transcript,
+  and never uses managed conversation state.
+- `benchmark_live.py` performs the dependency/credential preflight, supervises
+  the warm-up and 30 order-balanced pairs sequentially, validates every
+  artifact, retains invalid pairs, computes frozen-price cost, and withholds
+  winner language until the recovery gate passes.
 - `run_benchmark.py` supervises both offline two-process controls and preserves
   stdout, stderr, state, metrics, traces, manifests, and reports.
 - `experiment.json` freezes the fixture, tools, failure, model configuration,
@@ -95,17 +105,17 @@ and [session creation reference](https://developers.openai.com/api/reference/pyt
 
 ## What is not implemented or claimed
 
-There is no live three-tool Agents API driver, no live custom Responses API
-driver, and no set of 30 paired runs in this revision. The adapter's basic
-`--live` path can create and observe a session, but it is not the preregistered
-end-to-end benchmark arm. Do not compare the simulator's wall clock against
-the local harness: scripted execution is not provider execution.
+There is still no provider-backed result or set of 30 paired runs in this
+revision. Both live arms and the common supervisor are implemented and pass
+mocked contract tests; that does not prove the beta API accepts the run or that
+either arm recovers in production. Do not compare simulator wall clock against
+provider execution.
 
-Before a valid live series, the remaining work is to implement both drivers
-against the frozen tool contract, pin a compatible SDK and pricing snapshot,
-run one excluded warm-up per arm, then collect 30 sequential paired trials.
-The exact returned model must match the frozen model; substitutions require a
-new protocol revision. Invalid and failed trials stay visible.
+The remaining gate is a scoped `OPENAI_API_KEY` with Agents and Responses
+permissions. The live series then runs one excluded warm-up per arm followed by
+30 sequential paired trials. The exact returned model must match the frozen
+model; substitutions require a new protocol revision. Invalid and failed
+trials stay visible.
 
 ## Why publish before the live result?
 
@@ -117,8 +127,34 @@ they can inspect whether the recovery claim is falsifiable before provider data
 exists.
 
 For this revision, the only supported conclusion is: **the offline recovery
-control is reproducible, and the live comparison is pending credentials and two
-benchmark-specific drivers.**
+control is reproducible, the live implementation is contract-tested, and the
+provider comparison is pending credentials and execution.**
+
+## Live preflight and execution
+
+The beta Agents surface is currently pinned to an exact commit of the official
+OpenAI Python SDK because the latest PyPI release inspected before trial zero
+did not expose `beta.agents.sessions`. Use Python 3.10 or newer; the frozen
+development environment uses Python 3.13.11.
+
+```bash
+python3.13 -m venv .venv
+.venv/bin/python -m pip install -r requirements.lock
+
+# Prints every readiness check. With no key, exits 2 before creating a run.
+.venv/bin/python benchmark_live.py --preflight
+
+# Shows the frozen warm-up and 30-pair order without calling the provider.
+.venv/bin/python benchmark_live.py --plan
+
+# Provider-backed execution; refuses to overwrite OUTPUT_DIR.
+OPENAI_API_KEY=... .venv/bin/python benchmark_live.py \
+  --execute --output-dir runs/live-YYYYMMDDTHHMMSSZ
+```
+
+The checked-in `evidence/live-preflight-20260921T171810Z.json` shows that the
+pinned SDK exposes both required API surfaces and that execution was stopped
+solely because no key was present. It is readiness evidence, not a live result.
 
 ## Reproduce individual arms
 

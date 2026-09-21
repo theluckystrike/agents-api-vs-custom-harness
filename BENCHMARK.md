@@ -6,13 +6,16 @@ separately.
 
 ## Implementation status
 
-As of 2026-09-21, this directory contains offline, deterministic `--simulate` control paths. The
-custom harness proves its local checkpoint/failure/resume path, and the managed-arm adapter simulates
-durable managed-session identifiers. These are engineering smoke tests only. A live custom Responses
-three-tool driver, a live managed Agents API three-tool driver, the common evaluator/supervisor, and
-30 paired live runs have **not** yet been implemented and evidenced end to end. Consequently, there
-is no live comparison result, latency/cost finding, or winning arm yet. Nothing in this pre-registration
-should be read as evidence that either API completed the task.
+As of 2026-09-21, this directory contains offline deterministic controls, two provider-backed live
+drivers, and a common supervisor/evaluator. The live implementation is contract-tested with injected
+SDK adapters: both arms receive identical frozen input, persist the planned failure, resume in a new
+process, validate receipts and traces, and enforce the same output contract. The exact official SDK
+commit and transitive environment are frozen in `requirements-live.txt` and `requirements.lock`.
+
+No provider-backed trial or set of 30 paired runs has executed because this environment has no
+`OPENAI_API_KEY`. Consequently, there is no live comparison result, latency/cost finding, or winning
+arm yet. Mocked tests and no-key controls are implementation evidence only; they do not establish
+that either API completed the task against the provider.
 
 ## Question
 
@@ -324,3 +327,13 @@ privacy, retention, operational, and failure-domain properties that byte count a
 Publish raw runs, failed trials, exclusions, lockfiles, evaluator code, pricing snapshot, and the
 frozen `experiment.json`. Any public conclusion must say "for this task and configuration" and must
 separate simulation results from live results.
+
+## Implementation amendment (before trial zero)
+
+On 2026-09-21, before any live trial, the live drivers, supervisor, official pricing snapshot, and
+dependency snapshot were added. This does not change the hypotheses, fixture, sample size, failure
+boundary, exclusions, measures, or decision rule. The current PyPI SDK release inspected at that
+time (`openai 2.48.0`) lacked `beta.agents.sessions`, while the official SDK repository exposed the
+documented API. The environment is therefore pinned to official `openai-python` commit
+`febbcdfe39f6887caeb4c3c18e5aabb4404ef59b` (package version `3.16.2`) and Python 3.13.11. Preflight
+must prove both `beta.agents.sessions` and `responses.create` exist before trial zero.
