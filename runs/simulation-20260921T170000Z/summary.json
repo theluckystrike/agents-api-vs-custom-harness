@@ -1,0 +1,64 @@
+{
+  "arms": {
+    "agents_api": {
+      "metrics": {
+        "api_derived": false,
+        "arm": "agents_api",
+        "comparison_eligible": false,
+        "completed_at": "2026-09-21T16:57:21.368344Z",
+        "cost_usd": null,
+        "execution_mode": "simulation",
+        "model": null,
+        "provider_trace_status": "not_applicable",
+        "retries": 1,
+        "retry_count": 1,
+        "run_id": "simulation-20260921T170000Z-agents_api",
+        "schema_version": 1,
+        "session_id": "sim_session_28cc918db3c4222f",
+        "simulated": true,
+        "source": "deterministic_simulation_not_openai_api",
+        "started_at": "2026-09-21T16:57:21.319333Z",
+        "status": "completed",
+        "successful_tool_calls": 3,
+        "tool_calls": 4,
+        "turn_ids": [
+          "sim_turn_5d4764e3c357f5ec"
+        ],
+        "usage": {
+          "input_tokens": null,
+          "output_tokens": null,
+          "total_tokens": null
+        },
+        "wall_time_ms": 0
+      },
+      "passed": true
+    },
+    "custom_harness": {
+      "metrics": {
+        "retries": 1,
+        "successful_tool_calls": 3,
+        "tool_calls": 4,
+        "wall_time_ms": 3.612
+      },
+      "passed": true
+    }
+  },
+  "comparison_eligible": false,
+  "execution_mode": "deterministic_simulation",
+  "generated_at": "2026-09-21T16:57:21Z",
+  "limitations": [
+    "The Agents API arm is a scripted state-machine simulation, not an API call.",
+    "The custom arm is a deterministic local harness, not a Responses API model loop.",
+    "No latency, token, cost, quality, or recovery winner can be inferred from this run."
+  ],
+  "schema_version": 1,
+  "semantic_summaries_match": true,
+  "status": "offline_control_passed",
+  "unavailable": {
+    "live_agents_api_trial": "OPENAI_API_KEY and a compatible OpenAI SDK were not available",
+    "live_custom_responses_trial": "not implemented or run in this no-key control",
+    "provider_cost_usd": null,
+    "provider_latency_ms": null,
+    "provider_tokens": null
+  }
+}

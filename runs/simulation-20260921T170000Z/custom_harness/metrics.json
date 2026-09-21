@@ -1,0 +1,6 @@
+{
+  "retries": 1,
+  "successful_tool_calls": 3,
+  "tool_calls": 4,
+  "wall_time_ms": 3.612
+}

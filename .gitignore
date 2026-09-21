@@ -1,0 +1,10 @@
+__pycache__/
+.pytest_cache/
+*.py[cod]
+.DS_Store
+.env
+
+# Keep the published evidence run; ignore later local runs by default.
+runs/*
+!runs/simulation-20260921T170000Z/
+!runs/simulation-20260921T170000Z/**

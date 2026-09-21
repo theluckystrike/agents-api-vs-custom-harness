@@ -1,0 +1,23 @@
+{
+  "arm": "agents_api",
+  "comparison_eligible": false,
+  "completed_at": "2026-09-21T16:57:21Z",
+  "execution_mode": "deterministic_simulation",
+  "initial_exit_code": 75,
+  "invariants": {
+    "four_total_tool_attempts": true,
+    "initial_exit_is_75": true,
+    "one_retry": true,
+    "report_exists": true,
+    "resume_exit_is_0": true,
+    "three_successful_tool_calls": true
+  },
+  "logical_run_id": "simulation-20260921T170000Z-agents_api",
+  "openai_api_key_present": false,
+  "passed": true,
+  "platform": "macOS-26.6.2-arm64-arm-64bit",
+  "python": "3.9.6",
+  "resume_exit_code": 0,
+  "schema_version": 1,
+  "started_at": "2026-09-21T16:57:21Z"
+}

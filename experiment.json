@@ -1,0 +1,576 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "schema_version": "1.0.0",
+  "benchmark_id": "agents-api-vs-minimal-harness-v1",
+  "protocol_status": "preregistered",
+  "preregistered_date": "2026-09-21",
+  "protocol_file": "BENCHMARK.md",
+  "question": "For one fixed resumable three-tool workflow, compare managed Agents API orchestration with an application-owned Responses API loop.",
+  "official_documentation": [
+    "https://developers.openai.com/api/reference/typescript/resources/beta/subresources/agents/subresources/sessions/methods/create",
+    "https://developers.openai.com/api/docs/guides/agents-api/tools/functions",
+    "https://developers.openai.com/api/docs/guides/agents-api/tracing",
+    "https://developers.openai.com/api/reference/cli/resources/responses/methods/create"
+  ],
+  "model": {
+    "requested_id": "gpt-5.6-terra",
+    "substitution_allowed": false,
+    "reasoning_effort": "low",
+    "text_verbosity": "low",
+    "service_tier": "default",
+    "stream": false,
+    "parallel_tool_calls": false
+  },
+  "task": {
+    "task_id": "normalize-summarize-report-v1",
+    "dataset_id": "pipeline-runs-v1",
+    "developer_instruction": "Complete the task only through the supplied tools. Call normalize_records first, summarize_records with its normalized result second, and write_report with the normalized result and summary last. A retryable TEMP_UNAVAILABLE tool error must be retried with identical arguments. Do not invent, omit, or modify records. Return only the final write_report receipt.",
+    "user_instruction": "Normalize the supplied pipeline records, calculate the required summary, and commit the canonical report.",
+    "raw_records": [
+      {
+        "id": " job-003 ",
+        "latency_ms": "80",
+        "status": "ok"
+      },
+      {
+        "id": "job-001",
+        "latency_ms": "120",
+        "status": "ok"
+      },
+      {
+        "id": "job-002",
+        "latency_ms": "200",
+        "status": "error"
+      },
+      {
+        "id": "job-001",
+        "latency_ms": "120",
+        "status": "ok"
+      },
+      {
+        "id": "job-004",
+        "latency_ms": "160",
+        "status": "ok"
+      },
+      {
+        "id": "job-005",
+        "latency_ms": "not-a-number",
+        "status": "ok"
+      }
+    ],
+    "normalization_rules": {
+      "strings": "trim leading and trailing ASCII whitespace; lowercase status",
+      "latency_ms": "parse an entire base-10 integer string; otherwise reject",
+      "duplicate_ids": "keep first occurrence and reject each later occurrence",
+      "sort": "accepted records ascending by Unicode code point order of normalized id",
+      "p95": "nearest-rank: sorted_latencies[ceil(0.95 * n) - 1]"
+    },
+    "expected_normalized_records": [
+      {
+        "id": "job-001",
+        "latency_ms": 120,
+        "status": "ok"
+      },
+      {
+        "id": "job-002",
+        "latency_ms": 200,
+        "status": "error"
+      },
+      {
+        "id": "job-003",
+        "latency_ms": 80,
+        "status": "ok"
+      },
+      {
+        "id": "job-004",
+        "latency_ms": 160,
+        "status": "ok"
+      }
+    ],
+    "expected_report": {
+      "task": "durable-three-tool-pipeline-v1",
+      "input": {
+        "source_count": 6,
+        "valid_count": 4,
+        "dropped": [
+          {
+            "id": "job-001",
+            "index": 3,
+            "reason": "duplicate_id"
+          },
+          {
+            "id": "job-005",
+            "index": 5,
+            "reason": "invalid_latency"
+          }
+        ]
+      },
+      "summary": {
+        "count": 4,
+        "error_count": 1,
+        "error_rate": 0.25,
+        "mean_latency_ms": 140.0,
+        "p95_latency_ms": 200
+      },
+      "normalized_records_sha256": "d4ce35528f777b9c847c0ce2b52e2db6511db8a030a1741e087cd560a403c98c"
+    }
+  },
+  "tools": [
+    {
+      "type": "function",
+      "name": "normalize_records",
+      "description": "Normalize the fixed raw record array. Pure and deterministic. Return accepted records and rejections.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "dataset_id": {
+            "type": "string",
+            "const": "pipeline-runs-v1"
+          },
+          "records": {
+            "type": "array",
+            "minItems": 6,
+            "maxItems": 6,
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "latency_ms": {
+                  "type": "string"
+                },
+                "status": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "id",
+                "latency_ms",
+                "status"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "dataset_id",
+          "records"
+        ],
+        "additionalProperties": false
+      },
+      "side_effect": false,
+      "expected_successful_calls": 1
+    },
+    {
+      "type": "function",
+      "name": "summarize_records",
+      "description": "Compute the fixed summary from normalized records. Pure and deterministic. Retry identical arguments when TEMP_UNAVAILABLE is retryable.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "normalized": {
+            "type": "object",
+            "properties": {
+              "source_count": {
+                "type": "integer",
+                "const": 6
+              },
+              "valid_count": {
+                "type": "integer",
+                "const": 4
+              },
+              "records": {
+                "type": "array",
+                "minItems": 4,
+                "maxItems": 4,
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "latency_ms": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "ok",
+                        "error"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "latency_ms",
+                    "status"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "dropped": {
+                "type": "array",
+                "minItems": 2,
+                "maxItems": 2,
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "index": {
+                      "type": "integer"
+                    },
+                    "reason": {
+                      "type": "string",
+                      "enum": [
+                        "duplicate_id",
+                        "invalid_latency"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "index",
+                    "reason"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "source_count",
+              "valid_count",
+              "records",
+              "dropped"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "normalized"
+        ],
+        "additionalProperties": false
+      },
+      "side_effect": false,
+      "expected_successful_calls": 1,
+      "expected_failed_calls": 1
+    },
+    {
+      "type": "function",
+      "name": "write_report",
+      "description": "Build, validate, and atomically commit the canonical report from the complete normalized result and summary. Idempotent for an identical logical run and arguments hash. Return its SHA-256 receipt.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "normalized": {
+            "type": "object"
+          },
+          "summary": {
+            "type": "object",
+            "properties": {
+              "count": {
+                "type": "integer"
+              },
+              "error_count": {
+                "type": "integer"
+              },
+              "error_rate": {
+                "type": "number"
+              },
+              "mean_latency_ms": {
+                "type": "number"
+              },
+              "p95_latency_ms": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "count",
+              "error_count",
+              "error_rate",
+              "mean_latency_ms",
+              "p95_latency_ms"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "normalized",
+          "summary"
+        ],
+        "additionalProperties": false
+      },
+      "side_effect": true,
+      "side_effect_target": "report.json",
+      "expected_successful_calls": 1
+    }
+  ],
+  "fault": {
+    "fault_id": "summarize-first-attempt-v1",
+    "tool": "summarize_records",
+    "semantic_attempt": 1,
+    "key_fields": [
+      "logical_run_id",
+      "tool_name",
+      "canonical_arguments_sha256"
+    ],
+    "result": {
+      "ok": false,
+      "error": {
+        "code": "TEMP_UNAVAILABLE",
+        "message": "pre-registered transient failure",
+        "retryable": true,
+        "retry_after_ms": 0
+      }
+    },
+    "crash_after_checkpoint": "C2_FAILURE_PERSISTED",
+    "first_process_exit_code": 75,
+    "must_restart_process": true,
+    "max_injections_per_logical_run": 1
+  },
+  "checkpoints": [
+    "C0_INITIALIZED",
+    "C1_NORMALIZED",
+    "C2_FAILURE_PERSISTED",
+    "C3_SUMMARIZED",
+    "C4_REPORT_COMMITTED",
+    "C5_VERIFIED"
+  ],
+  "expected_tool_attempts": [
+    {
+      "ordinal": 1,
+      "tool": "normalize_records",
+      "status": "success",
+      "process_ordinal": 1
+    },
+    {
+      "ordinal": 2,
+      "tool": "summarize_records",
+      "status": "retryable_error",
+      "error_code": "TEMP_UNAVAILABLE",
+      "process_ordinal": 1
+    },
+    {
+      "ordinal": 3,
+      "tool": "summarize_records",
+      "status": "success",
+      "process_ordinal": 2
+    },
+    {
+      "ordinal": 4,
+      "tool": "write_report",
+      "status": "success",
+      "process_ordinal": 2
+    }
+  ],
+  "arms": {
+    "agents_api": {
+      "label": "Managed Agents API",
+      "api": "POST /agents/sessions and session events",
+      "environment": {
+        "type": "none"
+      },
+      "persistence": "managed session plus minimal local pointer, fault state, and side-effect receipts",
+      "resume_identity": "same session_id",
+      "provider_trace": "export after terminal turn; measure export lag separately"
+    },
+    "custom_harness": {
+      "label": "Minimal custom Responses harness",
+      "api": "POST /responses",
+      "store": false,
+      "forbidden_state_helpers": [
+        "Agents API",
+        "Agents SDK runner",
+        "Conversations API",
+        "previous_response_id"
+      ],
+      "persistence": "application-owned FSM and replayable transcript",
+      "resume_identity": "same logical_run_id"
+    }
+  },
+  "execution": {
+    "warmup_pairs": 1,
+    "warmups_excluded": true,
+    "measured_pairs": 30,
+    "pair_order": {
+      "odd": [
+        "agents_api",
+        "custom_harness"
+      ],
+      "even": [
+        "custom_harness",
+        "agents_api"
+      ]
+    },
+    "run_arms_concurrently": false,
+    "max_pair_start_separation_seconds": 300,
+    "max_model_calls_per_run": 8,
+    "max_tool_attempts_per_run": 8,
+    "provider_retry_limit": 0,
+    "injected_tool_retry_limit": 1,
+    "bootstrap_resamples": 10000,
+    "bootstrap_seed": 20260921,
+    "confidence_level": 0.95
+  },
+  "metrics": {
+    "correctness": [
+      "resumed_task_success",
+      "semantic_report_equal",
+      "checkpoint_order_valid",
+      "tool_sequence_valid",
+      "same_remote_session_on_resume",
+      "duplicate_tool_calls",
+      "duplicate_side_effects",
+      "secret_scan_passed"
+    ],
+    "time_ms": [
+      "initial_wall_ms",
+      "restart_gap_ms",
+      "recovery_wall_ms",
+      "active_wall_ms",
+      "end_to_end_wall_ms",
+      "model_call_latency_ms",
+      "tool_attempt_latency_ms",
+      "provider_trace_export_lag_ms"
+    ],
+    "counts": [
+      "process_count",
+      "resume_count",
+      "model_calls",
+      "provider_requests",
+      "tool_attempts",
+      "tool_successes",
+      "injected_failures",
+      "retry_count"
+    ],
+    "tokens": [
+      "input_tokens",
+      "cached_input_tokens",
+      "output_tokens",
+      "reasoning_tokens",
+      "total_tokens"
+    ],
+    "cost_usd": [
+      "uncached_input_cost_usd",
+      "cached_input_cost_usd",
+      "output_cost_usd",
+      "agents_api_non_token_cost_usd",
+      "total_cost_usd"
+    ],
+    "maintainability_proxies": [
+      "checkpoint_bytes_at_c2",
+      "peak_checkpoint_bytes",
+      "arm_specific_executable_loc"
+    ],
+    "missing_value_policy": "Use null for unavailable or unknown measurements; never coerce them to zero."
+  },
+  "pricing_snapshot": {
+    "status": "must_be_frozen_before_first_live_pair",
+    "official_source_url": null,
+    "retrieved_utc": null,
+    "currency": "USD",
+    "per_million_tokens": {
+      "uncached_input": null,
+      "cached_input": null,
+      "output": null
+    },
+    "agents_api_non_token_charges": null
+  },
+  "valid_trial_invariants": [
+    "first invocation exits 75 only after C2 is durable",
+    "replacement invocation is a different process",
+    "one logical run id across both process invocations",
+    "managed arm has exactly one session id",
+    "checkpoints equal the pre-registered ordered list",
+    "tool attempts equal expected_tool_attempts",
+    "normalize_records is not repeated after resume",
+    "one retry and one injected failure",
+    "exactly one report commit and no duplicate side effect",
+    "report is semantically equal to task.expected_report",
+    "all hashes and usage/cost arithmetic verify",
+    "artifact secret scan passes"
+  ],
+  "exclusions": {
+    "invalidate_entire_pair": [
+      "provider rate limit",
+      "provider 5xx not created by the fault injector",
+      "network loss",
+      "machine sleep",
+      "returned model differs between arms",
+      "frozen configuration hash differs between arms"
+    ],
+    "never_exclude": [
+      "model chooses wrong tool",
+      "model emits invalid arguments",
+      "model fails to retry",
+      "extra tool or model call",
+      "wrong final report",
+      "duplicate side effect",
+      "arm exceeds a run limit"
+    ],
+    "replacement_policy": "Retain invalid pair and reason, then append a full replacement pair. Never delete or overwrite."
+  },
+  "outputs_per_trial": [
+    "run-manifest.json",
+    "state.json",
+    "trace.jsonl",
+    "report.json",
+    "metrics.json",
+    "stdout-initial.log",
+    "stderr-initial.log",
+    "stdout-resume.log",
+    "stderr-resume.log"
+  ],
+  "managed_arm_additional_output": "provider-trace.json or explicit unavailable status in metrics.json",
+  "simulation": {
+    "flag": "--simulate",
+    "requires_api_key": false,
+    "planner": "deterministic scripted canonical tool sequence",
+    "first_invocation_expected_exit_code": 75,
+    "resume_expected_exit_code": 0,
+    "execution_mode": "simulation",
+    "comparison_eligible": false,
+    "provider_requests": 0,
+    "token_fields": null,
+    "cost_fields": null,
+    "provider_trace_status": "not_applicable",
+    "claims_allowed": [
+      "local checkpoint and resume behavior",
+      "fault injection behavior",
+      "tool idempotency",
+      "trace invariants",
+      "semantic report correctness"
+    ],
+    "claims_forbidden": [
+      "model quality",
+      "API latency",
+      "token efficiency",
+      "live dollar cost",
+      "managed service reliability"
+    ]
+  },
+  "analysis": {
+    "recovery_gate": "each arm must pass at least 29 of 30 valid measured pairs before latency or cost winner language is allowed",
+    "primary_metric": "recovery_wall_ms",
+    "paired_metrics": [
+      "recovery_wall_ms",
+      "active_wall_ms",
+      "total_tokens",
+      "total_cost_usd"
+    ],
+    "descriptive_statistics": [
+      "raw values",
+      "median",
+      "p25",
+      "p75",
+      "p95",
+      "paired median difference",
+      "95 percent paired bootstrap percentile interval"
+    ],
+    "single_composite_score": false
+  },
+  "revision_policy": "After the first live trial, append dated amendments and run them as a new revision; do not rewrite this pre-registration."
+}

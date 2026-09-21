@@ -1,0 +1,108 @@
+{
+  "attempts": {
+    "normalize_records": 1,
+    "summarize_records": 2,
+    "write_report": 1
+  },
+  "completed_steps": [
+    {
+      "index": 0,
+      "tool": "normalize_records"
+    },
+    {
+      "index": 1,
+      "tool": "summarize_records"
+    },
+    {
+      "index": 2,
+      "tool": "write_report"
+    }
+  ],
+  "last_error": null,
+  "metrics": {
+    "retries": 1,
+    "successful_tool_calls": 3,
+    "tool_calls": 4,
+    "wall_time_ms": 3.612
+  },
+  "next_step": 3,
+  "results": {
+    "normalize_records": {
+      "dropped": [
+        {
+          "id": "job-001",
+          "index": 3,
+          "reason": "duplicate_id"
+        },
+        {
+          "id": "job-005",
+          "index": 5,
+          "reason": "invalid_latency"
+        }
+      ],
+      "records": [
+        {
+          "id": "job-001",
+          "latency_ms": 120,
+          "status": "ok"
+        },
+        {
+          "id": "job-002",
+          "latency_ms": 200,
+          "status": "error"
+        },
+        {
+          "id": "job-003",
+          "latency_ms": 80,
+          "status": "ok"
+        },
+        {
+          "id": "job-004",
+          "latency_ms": 160,
+          "status": "ok"
+        }
+      ],
+      "source_count": 6,
+      "valid_count": 4
+    },
+    "summarize_records": {
+      "count": 4,
+      "error_count": 1,
+      "error_rate": 0.25,
+      "mean_latency_ms": 140.0,
+      "p95_latency_ms": 200
+    },
+    "write_report": {
+      "input": {
+        "dropped": [
+          {
+            "id": "job-001",
+            "index": 3,
+            "reason": "duplicate_id"
+          },
+          {
+            "id": "job-005",
+            "index": 5,
+            "reason": "invalid_latency"
+          }
+        ],
+        "source_count": 6,
+        "valid_count": 4
+      },
+      "normalized_records_sha256": "d4ce35528f777b9c847c0ce2b52e2db6511db8a030a1741e087cd560a403c98c",
+      "summary": {
+        "count": 4,
+        "error_count": 1,
+        "error_rate": 0.25,
+        "mean_latency_ms": 140.0,
+        "p95_latency_ms": 200
+      },
+      "task": "durable-three-tool-pipeline-v1"
+    }
+  },
+  "run_id": "simulation-20260921T170000Z-custom_harness",
+  "schema_version": 1,
+  "status": "completed",
+  "transient_failure_injected": true,
+  "workflow_version": "durable-three-tool-pipeline-v1"
+}
