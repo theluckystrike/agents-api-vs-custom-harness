@@ -1,5 +1,7 @@
 # Agents API vs a custom harness: a preregistered recovery benchmark
 
+[![no-key contract tests](https://github.com/theluckystrike/agents-api-vs-custom-harness/actions/workflows/test.yml/badge.svg)](https://github.com/theluckystrike/agents-api-vs-custom-harness/actions/workflows/test.yml)
+
 This repository is an executable benchmark scaffold for one narrow question:
 on the same three-tool workflow, what does a managed Agents API session buy us
 over application-owned orchestration?

@@ -1,0 +1,39 @@
+name: no-key contract tests
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13.11"
+          cache: pip
+      - name: Install frozen environment
+        run: python -m pip install -r requirements.lock
+      - name: Run complete artifact suite
+        env:
+          OPENAI_API_KEY: ""
+        run: python -m pytest -q tests
+      - name: Run standard-library quickstart controls
+        env:
+          OPENAI_API_KEY: ""
+        run: python -m unittest discover -s tests -v
+      - name: Prove live preflight refuses missing credentials
+        env:
+          OPENAI_API_KEY: ""
+        run: |
+          set +e
+          python benchmark_live.py --preflight > preflight.json
+          status=$?
+          set -e
+          test "$status" -eq 2
+          python -c 'import json; value=json.load(open("preflight.json")); assert value["ready"] is False; assert value["checks"]["openai_sdk_agents_sessions_surface"] is True; assert value["checks"]["openai_sdk_responses_surface"] is True; assert value["checks"]["openai_api_key_present"] is False'
